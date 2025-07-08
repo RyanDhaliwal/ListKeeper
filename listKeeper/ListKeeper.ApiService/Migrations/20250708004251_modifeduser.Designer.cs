@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ListKeeper.ApiService.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20250616103821_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250708004251_modifeduser")]
+    partial class modifeduser
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,6 +32,11 @@ namespace ListKeeper.ApiService.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CellPhone")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2");

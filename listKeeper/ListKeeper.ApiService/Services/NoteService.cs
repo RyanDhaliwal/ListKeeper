@@ -1,15 +1,9 @@
-﻿// These 'using' statements import necessary namespaces.
-using ListKeeperWebApi.WebApi.Data;                // Access to the INoteRepository interface.
-using ListKeeperWebApi.WebApi.Models;              // Access to the main 'Note' domain model.
-using ListKeeperWebApi.WebApi.Models.ViewModels;   // Access to the NoteViewModel and LoginViewModel.
-using ListKeeperWebApi.WebApi.Models.Extensions;   // Access to the ToViewModel() and ToDomain() extension methods.
-using Microsoft.Extensions.Configuration;          // Provides access to the application's configuration (appsettings.json).
-using Microsoft.Extensions.Logging;                // Provides logging capabilities.
-using System.Security.Cryptography;                // Provides classes for cryptography, like HMACSHA256.
-using System.Text;
-using ListKeeper.ApiService.Models.ViewModels;
+﻿
+using global::ListKeeperWebApi.WebApi.Data;
 using ListKeeper.ApiService.Models;
-using ListKeeper.ApiService.Models.Extensions;                                 // Provides text encoding functionalities (e.g., UTF8).
+using ListKeeper.ApiService.Models.Extensions;
+using ListKeeper.ApiService.Models.ViewModels;
+using ListKeeper.ApiService.Services.ListKeeperWebApi.WebApi.Services;
 
 namespace ListKeeperWebApi.WebApi.Services
 {
@@ -37,10 +31,6 @@ namespace ListKeeperWebApi.WebApi.Services
             _config = config; // Store the injected configuration service.
         }
 
-        /// <summary>
-        /// Authenticates a note by hashing the provided password and comparing it with the stored hash.
-        /// </summary>
-
 
         /// <summary>
         /// Creates a new note in the system.
@@ -54,18 +44,21 @@ namespace ListKeeperWebApi.WebApi.Services
             var note = new Note
             {
                 Title = createNoteVm.Title,
-                Content = createNoteVm.Content,
                 DueDate = createNoteVm.DueDate,
                 Color = createNoteVm.Color,
+                Content = createNoteVm.Content,
                 Id = createNoteVm.Id,
-                IsCompleted = createNoteVm.IsCompleted,
-
+                IsCompleted = createNoteVm.IsCompleted
             };
+
+
+            // business rules checking
 
             // Delegate the actual database "add" operation to the repository.
             var createdNote = await _repo.AddAsync(note);
             return createdNote?.ToViewModel();
         }
+
 
         /// <summary>
         /// Updates an existing note's information.
@@ -78,12 +71,10 @@ namespace ListKeeperWebApi.WebApi.Services
             var note = await _repo.GetByIdAsync(noteVm.Id);
             if (note == null) return null; // Can't update a note that doesn't exist.
 
-            // --- LOGIC CORRECTION ---
-            // Map the updated properties from the view model to the database entity.
             note.Title = noteVm.Title;
-            note.Content = noteVm.Content;
             note.DueDate = noteVm.DueDate;
             note.Color = noteVm.Color;
+            note.Content = noteVm.Content;
             note.Id = noteVm.Id;
             note.IsCompleted = noteVm.IsCompleted;
 
@@ -134,5 +125,7 @@ namespace ListKeeperWebApi.WebApi.Services
             return note?.ToViewModel();
         }
 
+
     }
 }
+

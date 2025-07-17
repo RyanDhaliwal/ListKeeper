@@ -25,7 +25,6 @@ namespace ListKeeperWebApi.WebApi.Models
         [StringLength(450)]
         public string Email { get; set; } = null!;
 
- 
         /// <summary>
         /// Gets or sets the password hash
         /// </summary>

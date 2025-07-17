@@ -1,7 +1,6 @@
-﻿// These 'using' statements import necessary namespaces.
-using ListKeeper.ApiService.Models.ViewModels;
+﻿using ListKeeper.ApiService.Models.ViewModels;
 
-namespace ListKeeperWebApi.WebApi.Services
+namespace ListKeeper.ApiService.Services.ListKeeperWebApi.WebApi.Services
 {
     public interface INoteService
     {

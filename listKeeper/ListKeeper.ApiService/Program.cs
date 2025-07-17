@@ -1,7 +1,7 @@
 // These 'using' statements are like importing libraries or modules in other languages.
 // They give us access to the classes and methods we need from the .NET framework and our own project files.
 //
-using ListKeeper.ApiService.EndPoints;
+using ListKeeper.ApiService.Services.ListKeeperWebApi.WebApi.Services;
 using ListKeeperWebApi.WebApi.Data;          // Access to our DatabaseContext, UserRepository
 using ListKeeperWebApi.WebApi.Endpoints;     // Access to our endpoint mapping extension methods
 using ListKeeperWebApi.WebApi.Models;        // Access to our User model
@@ -64,9 +64,9 @@ builder.Services.AddHttpContextAccessor();
 //
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
 builder.Services.AddScoped<INoteRepository, NoteRepository>();
 builder.Services.AddScoped<INoteService, NoteService>();
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -184,7 +184,8 @@ var app = builder.Build();
 // We call our seeder method here, after the app is built but before it starts running.
 // This ensures all services are configured and available for the seeder to use.
 //
-await ListKeeperWebApi.WebApi.Data.DataSeeder.SeedAdminUserAsync(app);
+await DataSeeder.SeedAdminUserAsync(app);
+await DataSeeder.SeedNotesAsync(app);
 
 
 // Below this line, we are setting up the "HTTP Request Pipeline".

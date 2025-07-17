@@ -1,27 +1,25 @@
 ﻿using ListKeeper.ApiService.Models.ViewModels;
-using ListKeeperWebApi.WebApi.Models;
-using ListKeeperWebApi.WebApi.Models.ViewModels;
-
 namespace ListKeeper.ApiService.Models.Extensions
 {
     public static class NoteMappingExtensions
     {
         public static NoteViewModel? ToViewModel(this Note? note)
         {
+            // First, handle the case where the input object itself is null.
             if (note == null)
             {
                 return null;
             }
 
+            // Create a new view model and map the properties.
             return new NoteViewModel
             {
                 Id = note.Id,
-                Title = note.Title,
+                Color = note.Color,
                 Content = note.Content,
                 DueDate = note.DueDate,
                 IsCompleted = note.IsCompleted,
-                Color = note.Color
-
+                Title = note.Title
             };
         }
 
@@ -35,12 +33,11 @@ namespace ListKeeper.ApiService.Models.Extensions
             return new Note
             {
                 Id = viewModel.Id,
-                Title = viewModel.Title,
+                Color = viewModel.Color,
                 Content = viewModel.Content,
                 DueDate = viewModel.DueDate,
                 IsCompleted = viewModel.IsCompleted,
-                Color = viewModel.Color
-
+                Title = viewModel.Title
             };
         }
     }

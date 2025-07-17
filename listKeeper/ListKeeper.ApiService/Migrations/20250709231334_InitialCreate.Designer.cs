@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ListKeeper.ApiService.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20250709225711_InitialCreate")]
+    [Migration("20250709231334_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

@@ -1,5 +1,4 @@
-﻿using ListKeeperWebApi.WebApi.Models.Interfaces;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Numerics;
@@ -18,6 +17,7 @@ namespace ListKeeper.ApiService.Models
 
         [StringLength(500)]
         public string Content { get; set; }
+
         public DateTime DueDate { get; set; }
         public bool IsCompleted { get; set; }
 
@@ -30,6 +30,5 @@ namespace ListKeeper.ApiService.Models
             Content = string.Empty;
             Color = string.Empty;
         }
-
     }
 }

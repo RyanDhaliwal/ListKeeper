@@ -40,6 +40,7 @@ namespace ListKeeperWebApi.WebApi.Data
         /// Gets or sets the users DbSet
         /// </summary>
         public DbSet<User> Users { get; set; }
+
         public DbSet<Note> Notes { get; set; }
 
         /// <summary>

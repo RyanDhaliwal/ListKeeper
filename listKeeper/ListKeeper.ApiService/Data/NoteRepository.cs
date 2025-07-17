@@ -12,15 +12,25 @@ using ListKeeper.ApiService.Models; // Access to the INoteRepository interface.
 
 namespace ListKeeperWebApi.WebApi.Data
 {
-
+    /// <summary>
+    /// This is the "Repository" layer. Its only job is to handle direct communication with the database
+    /// for a specific data entity (in this case, the 'Note'). It abstracts away the raw database queries.
+    /// This class implements the `INoteRepository` interface, which means it promises to provide
+    /// all the methods defined in that interface contract.
+    /// </summary>
     public class NoteRepository : INoteRepository
     {
-
+        // These are private, read-only fields to hold the "dependencies" this repository needs.
+        // They are set once in the constructor and cannot be changed afterward.
         private readonly DatabaseContext _context;
         private readonly ILogger<NoteRepository> _logger;
         private readonly IConfiguration _configuration;
 
-
+        /// <summary>
+        /// This is the constructor. When an instance of `NoteRepository` is created,
+        // the dependency injection system (configured in Program.cs) automatically provides
+        // an instance of `DatabaseContext`, `ILogger`, and `IConfiguration`.
+        /// </summary>
         public NoteRepository(DatabaseContext context, ILogger<NoteRepository> logger, IConfiguration configuration)
         {
             _context = context; // Our gateway to the database.
@@ -28,11 +38,16 @@ namespace ListKeeperWebApi.WebApi.Data
             _configuration = configuration; // Our tool for reading settings from appsettings.json.
         }
 
+
+        /// <summary>
+        /// Finds a note by their primary key (ID).
+        /// </summary>
         public async Task<Note?> GetByIdAsync(int id)
         {
             _logger.LogInformation("Attempting to find note by ID: {NoteId}", id);
             try
             {
+                // `FindAsync` is a highly efficient way to look up an entity by its primary key.
                 return await _context.Notes.FindAsync(id);
             }
             catch (Exception ex)
@@ -43,6 +58,10 @@ namespace ListKeeperWebApi.WebApi.Data
         }
 
 
+
+        /// <summary>
+        /// Retrieves a list of all notes from the database.
+        /// </summary>
         public async Task<IEnumerable<Note>> GetAllAsync()
         {
             _logger.LogInformation("Attempting to get all notes");
@@ -146,4 +165,5 @@ namespace ListKeeperWebApi.WebApi.Data
             }
         }
     }
+
 }

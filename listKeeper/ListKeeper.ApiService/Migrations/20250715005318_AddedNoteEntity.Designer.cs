@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ListKeeper.ApiService.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20250715004819_AddNoteDb")]
-    partial class AddNoteDb
+    [Migration("20250715005318_AddedNoteEntity")]
+    partial class AddedNoteEntity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -56,7 +56,7 @@ namespace ListKeeper.ApiService.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Notes");
+                    b.ToTable("Note");
                 });
 
             modelBuilder.Entity("ListKeeperWebApi.WebApi.Models.User", b =>

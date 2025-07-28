@@ -135,8 +135,8 @@ namespace ListKeeperWebApi.WebApi.Services
             var users = await _repo.GetAllAsync();
             // The `?.` is a null-conditional operator. If 'users' is null, it won't throw an error.
             // The `??` is a null-coalescing operator.
-            // If the result of the Select is null, it returns an empty list instead.
-            return users?.Select(u => u.ToViewModel()) ?? Enumerable.Empty<UserViewModel>();
+            // Filter out any null results from ToViewModel() and return non-nullable collection
+            return users?.Select(u => u.ToViewModel()).Where(vm => vm != null).Cast<UserViewModel>() ?? Enumerable.Empty<UserViewModel>();
         }
 
         /// <summary>
@@ -155,6 +155,7 @@ namespace ListKeeperWebApi.WebApi.Services
             if (userVm == null) return false;
             // The `ToDomain()` extension method converts the view model back to a database entity.
             var user = userVm.ToDomain();
+            if (user == null) return false; // Handle null result from ToDomain()
             return await _repo.Delete(user);
         }
 
@@ -174,6 +175,46 @@ namespace ListKeeperWebApi.WebApi.Services
         {
             if (loginViewModel == null) return null;
             return await LoginAsync(loginViewModel.Username, loginViewModel.Password);
+        }
+
+        /// <summary>
+        /// Registers a new user and returns their information if successful.
+        /// </summary>
+        public async Task<UserViewModel?> SignupAsync(SignupViewModel signupViewModel)
+        {
+            if (signupViewModel == null) return null;
+
+            // Check if user already exists 
+            var existingUser = await _repo.GetByEmailAsync(signupViewModel.Email);
+            if (existingUser != null)
+            {
+                _logger.LogWarning("Signup attempt with existing email: {Email}",
+        signupViewModel.Email);
+                return null; // User already exists 
+            }
+
+            // Create new user from signup data 
+            var userViewModel = new UserViewModel
+            {
+                Email = signupViewModel.Email,
+                Username = signupViewModel.Username,
+                Firstname = signupViewModel.FirstName,
+                Lastname = signupViewModel.LastName,
+                Password = signupViewModel.Password,
+                Role = "User", // Default role for new signups 
+                Phone = string.Empty
+            };
+
+            // Use existing CreateUserAsync method which handles password hashing 
+            var createdUser = await CreateUserAsync(userViewModel);
+
+            if (createdUser != null)
+            {
+                _logger.LogInformation("New user successfully created: {Email}",
+        signupViewModel.Email);
+            }
+
+            return createdUser;
         }
     }
 }

@@ -53,6 +53,11 @@ namespace ListKeeperWebApi.WebApi.Endpoints
                  .WithDescription("Authenticates a user and returns a token")
                  .AllowAnonymous();
 
+            group.MapPost("/Signup", Signup)
+                 .WithName("Signup")
+                 .WithDescription("Registers a new user and returns a token")
+                 .AllowAnonymous();
+
             return group;
         }
 
@@ -213,16 +218,65 @@ namespace ListKeeperWebApi.WebApi.Endpoints
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim("id", user.Id.ToString()),
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Name, user.Username ?? string.Empty),
+                    new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
                     // This is the crucial claim that the authorization policy checks.
-                    new Claim(ClaimTypes.Role, user.Role)
+                    new Claim(ClaimTypes.Role, user.Role ?? string.Empty)
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
+        }
+
+        private static async Task<IResult> Signup(
+            [FromBody] SignupViewModel model,
+            [FromServices] IUserService userService,
+            [FromServices] IConfiguration config,
+            [FromServices] ILoggerFactory loggerFactory)
+        {
+            var logger = loggerFactory.CreateLogger("Signup");
+            try
+            {
+                if (model == null)
+                {
+                    return Results.BadRequest("Signup data is required");
+                }
+
+                logger.LogInformation("Signup attempt for email: {Email}", model.Email);
+
+                var user = await userService.SignupAsync(model);
+                if (user == null)
+                {
+                    return Results.BadRequest("User already exists or signup failed");
+                }
+
+                // Generate JWT token for immediate login after signup 
+                var token = GenerateJwtToken(user, config);
+
+                // Return user info with token (same format as authenticate endpoint) 
+                return Results.Ok(new
+                {
+                    user = new
+                    {
+                        id = user.Id,
+                        email = user.Email,
+                        username = user.Username,
+                        firstname = user.Firstname,
+                        lastname = user.Lastname,
+                        role = user.Role
+                    },
+                    token = token
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error during signup for email: {Email}",
+                model?.Email);
+                        return Results.Problem("An error occurred during signup", statusCode:
+                (int)HttpStatusCode.InternalServerError);
+            }
         }
     }
 }

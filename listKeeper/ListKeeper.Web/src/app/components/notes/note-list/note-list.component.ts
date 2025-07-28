@@ -8,6 +8,8 @@ import { NoteService } from '../../../services/note.service';
 import { UserService } from '../../../services/user.service';
 import { Note } from '../../../models/note-model';
 import { User } from '../../../models/user.model';
+import { SearchCriteria } from '../../../models/search-criteria';
+import { NoteStatus } from '../../../models/note-status';
 import { NoteItemComponent } from '../note-item/note-item.component';
 import { NoteFormComponent } from '../note-form/note-form.component';
 
@@ -25,7 +27,7 @@ export class NoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild(NoteFormComponent) noteFormComponent: NoteFormComponent;
   @ViewChild('editNoteForm') editNoteFormComponent: NoteFormComponent;
   
-  notes: Note[];
+  notes: Note[] = [];
   modalInstance: any;
   editModalInstance: any;
   deleteModalInstance: any;
@@ -34,7 +36,9 @@ export class NoteListComponent implements OnInit, AfterViewInit, OnDestroy {
   currentUser: User | null = null;
 
   private searchSubject = new Subject<string>();
+  private statusSubject = new Subject<any>();
   private searchSubscription: Subscription;
+  private statusSubscription: Subscription;
   private userSubscription: Subscription;
   private currentSearchTerm: string = '';
   
@@ -63,7 +67,8 @@ export class NoteListComponent implements OnInit, AfterViewInit, OnDestroy {
       if (user) {
         // User is logged in, setup notes functionality
         this.setupSearchSubscription();
-        this.refreshNotes(this.currentSearchTerm, this.statusForm.value);
+        this.setupStatusSubscription();
+        this.performSearch(this.currentSearchTerm, this.statusForm.value);
       } else {
         // No user logged in, redirect to home page
         this.router.navigate(['']);
@@ -93,6 +98,7 @@ export class NoteListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.searchSubscription?.unsubscribe();
+    this.statusSubscription?.unsubscribe();
     this.userSubscription?.unsubscribe();
   }
   
@@ -101,7 +107,14 @@ export class NoteListComponent implements OnInit, AfterViewInit, OnDestroy {
       debounceTime(400),
       distinctUntilChanged(),
       filter(term => term.length >= 3 || term.length === 0),
-      tap(searchTerm => this.refreshNotes(searchTerm, this.statusForm.value))
+      tap(searchTerm => this.performSearch(searchTerm, this.statusForm.value))
+    ).subscribe();
+  }
+
+  private setupStatusSubscription(): void {
+    this.statusSubscription = this.statusSubject.pipe(
+      debounceTime(100), // Short debounce for status changes
+      tap(statusValues => this.performSearch(this.currentSearchTerm, statusValues))
     ).subscribe();
   }
 
@@ -168,104 +181,71 @@ export class NoteListComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
     
-    this.refreshNotes(this.currentSearchTerm, this.statusForm.value);
+    // Trigger the status search after all form updates
+    this.statusSubject.next(this.statusForm.value);
   }
   
   onDropdownClick(event: MouseEvent): void {
     event.stopPropagation();
   }
   
-  public refreshNotes(searchTerm: string = '', statuses?: any): void {
-    console.log('Refreshing notes with filters:', { searchTerm, statuses });
-    
-    this.noteService.getAll().subscribe({
+
+  private performSearch(searchTerm: string = '', statuses?: any): void {
+    const selectedStatuses = statuses ? Object.keys(statuses).filter(k => statuses[k]) : ['All'];
+    const isAllSelected = selectedStatuses.includes('All');
+
+    // Create search criteria
+    const searchCriteria: SearchCriteria = {
+      searchText: searchTerm && searchTerm.length > 0 ? searchTerm : undefined,
+      statuses: this.mapStatusesToNumbers(selectedStatuses)
+    };
+
+    // Use the search service which will handle "All" case internally
+    this.noteService.getAllBySearchCriteria(searchCriteria).subscribe({
       next: (data: Note[]) => {
         this.notes = data;
       },
       error: (error) => {
-        console.error('Error loading notes:', error);
+        console.error('Error loading notes with search criteria:', error);
+        this.notes = [];
       }
     });
-  //   // Get all notes from the service
-  //   let allNotes = this.noteService.getAll();
-    
-  //   // Apply search filter if searchTerm is provided
-  //   // if (searchTerm && searchTerm.length > 0) {
-  //   //   allNotes = allNotes.filter(note => 
-  //   //     note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //   //     note.content.toLowerCase().includes(searchTerm.toLowerCase())
-  //   //   );
-  //   // }
-    
-  //   // Apply status filters if statuses are provided
-  //   if (statuses) {
-  //     const today = new Date();
-  //     today.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
-      
-  //     let filteredNotes: Note[] = [];
-      
-  //     // Check which statuses are selected
-  //     const selectedStatuses = Object.keys(statuses).filter(key => statuses[key]);
-      
-  //     // If 'All' is selected or no specific statuses are selected, show all notes
-  //     // if (selectedStatuses.includes('All') || selectedStatuses.length === 0) {
-  //     //   filteredNotes = allNotes;
-  //     // } else {
-  //     //   // Filter based on selected statuses
-  //     //   allNotes.forEach(note => {
-  //     //     const noteDate = new Date(note.dueDate);
-  //     //     noteDate.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
-          
-  //     //     let shouldInclude = false;
-          
-  //     //     // Check each selected status
-  //     //     selectedStatuses.forEach(status => {
-  //     //       switch (status) {
-  //     //         case 'Upcoming':
-  //     //           // Upcoming: due date is greater than today and not completed
-  //     //           if (noteDate > today && !note.isCompleted) {
-  //     //             shouldInclude = true;
-  //     //           }
-  //     //           break;
-                
-  //     //         case 'Past Due':
-  //     //           // Past Due: due date is less than or equal to today and not completed
-  //     //           if (noteDate <= today && !note.isCompleted) {
-  //     //             shouldInclude = true;
-  //     //           }
-  //     //           break;
-                
-  //     //         case 'Completed':
-  //     //           // Completed: isCompleted is true regardless of date
-  //     //           if (note.isCompleted) {
-  //     //             shouldInclude = true;
-  //     //           }
-  //     //           break;
-  //     //       }
-  //     //     });
-          
-  //     //     if (shouldInclude) {
-  //     //       filteredNotes.push(note);
-  //     //     }
-  //     //   });
-  //     // }
-      
-  //     this.notes = filteredNotes;
-  //   } else {
-  //     this.notes = allNotes;
-  //   }
-    
-  //   console.log('Filtered notes:', this.notes.length, 'out of', this.noteService.getNotes().length);
   }
-  
+
+  private mapStatusesToNumbers(statuses: string[]): number[] {
+    return statuses.map(status => {
+      switch (status) {
+        case 'All':
+          return NoteStatus.All;
+        case 'Upcoming':
+          return NoteStatus.Upcoming;
+        case 'Past Due':
+          return NoteStatus.PastDue;
+        case 'Completed':
+          return NoteStatus.Completed;
+        default:
+          return NoteStatus.All;
+      }
+    });
+  }
+
+  // Keep the old method for backward compatibility with other calls
+  public refreshNotes(searchTerm: string = '', statuses?: any): void {
+    this.performSearch(searchTerm, statuses);
+  }
+
+
   public openAddNoteModal(): void {
     this.modalInstance?.show();
   }
 
-  addNote(): void {
-    this.noteFormComponent.addNote();
-    this.refreshNotes(this.currentSearchTerm, this.statusForm.value);
-    this.modalInstance?.hide();
+  addNote(): void { 
+  this.noteFormComponent.addNote(); 
+  } 
+
+  onNoteAdded(note: Note): void { 
+  this.refreshNotes(this.currentSearchTerm, this.statusForm.value); 
+  this.modalInstance?.hide(); 
   }
 
   deleteNote(id: number): void {
@@ -277,14 +257,23 @@ export class NoteListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  confirmDelete(): void {
-    if (this.currentDeletingNote) {
-      this.noteService.delete(this.currentDeletingNote.id);
-      this.refreshNotes(this.currentSearchTerm, this.statusForm.value);
-      this.deleteModalInstance?.hide();
-      this.currentDeletingNote = null;
-    }
-  }
+  confirmDelete(): void { 
+    if (this.currentDeletingNote) { 
+      this.noteService.delete(this.currentDeletingNote.id).subscribe({ 
+        next: (response) => { 
+          console.log('Note deleted successfully:', response.message); 
+          this.refreshNotes(this.currentSearchTerm, this.statusForm.value); 
+          this.deleteModalInstance?.hide(); 
+          this.currentDeletingNote = null; 
+        }, 
+        error: (error) => { 
+          console.error('Error deleting note:', error); 
+          this.deleteModalInstance?.hide(); 
+          this.currentDeletingNote = null; 
+        } 
+      }); 
+    } 
+  } 
 
   cancelDelete(): void {
     this.deleteModalInstance?.hide();
@@ -296,16 +285,35 @@ export class NoteListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.editModalInstance?.show();
   }
 
-  updateNote(): void {
-    if (this.currentEditingNote && this.editNoteFormComponent) {
-      this.editNoteFormComponent.saveNote();
-      this.refreshNotes(this.currentSearchTerm, this.statusForm.value);
-      this.editModalInstance?.hide();
-      this.currentEditingNote = null;
-    }
+  updateNote(): void { 
+    if (this.currentEditingNote && this.editNoteFormComponent) { 
+      this.editNoteFormComponent.saveNote(); 
+    } 
   }
 
-  completeNote(id: number): void {
-    console.log('Completing note:', id);
+  onNoteUpdated(note: Note): void { 
+    this.refreshNotes(this.currentSearchTerm, this.statusForm.value); 
+    this.editModalInstance?.hide(); 
+    this.currentEditingNote = null; 
+  }
+
+  completeNote(id: number): void { 
+    const noteToComplete = this.notes.find(note => note.id === id); 
+    if (noteToComplete) { 
+      const updatedNote: Note = { 
+        ...noteToComplete, 
+        isCompleted: !noteToComplete.isCompleted 
+      }; 
+      
+      this.noteService.update(updatedNote).subscribe({ 
+        next: (updated) => { 
+          console.log('Note completion status updated:', updated); 
+          this.refreshNotes(this.currentSearchTerm, this.statusForm.value); 
+        }, 
+        error: (error) => { 
+          console.error('Error updating note completion status:', error); 
+        } 
+      }); 
+    } 
   }
 }

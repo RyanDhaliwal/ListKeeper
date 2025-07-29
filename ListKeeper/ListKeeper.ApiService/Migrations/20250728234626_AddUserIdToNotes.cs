@@ -5,7 +5,7 @@
 namespace ListKeeper.ApiService.Migrations
 {
     /// <inheritdoc />
-    public partial class NoteCategory : Migration
+    public partial class AddUserIdToNotes : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

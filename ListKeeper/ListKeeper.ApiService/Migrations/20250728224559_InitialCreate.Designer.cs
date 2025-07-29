@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ListKeeper.ApiService.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20250728183238_NoteCategory")]
-    partial class NoteCategory
+    [Migration("20250728224559_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -47,7 +47,8 @@ namespace ListKeeperWebApi.WebApi.Services
                 Color = createNoteVm.Color,
                 Content = createNoteVm.Content,
                 Id = createNoteVm.Id,
-                IsCompleted = createNoteVm.IsCompleted
+                IsCompleted = createNoteVm.IsCompleted,
+                UserId = createNoteVm.UserId
             };
 
 
@@ -95,7 +96,11 @@ namespace ListKeeperWebApi.WebApi.Services
             // If the result of the Select is null, it returns an empty list instead.
             return notes?.Select(u => u.ToViewModel()).Where(vm => vm != null).Cast<NoteViewModel>() ?? Enumerable.Empty<NoteViewModel>();
         }
-
+        public async Task<IEnumerable<NoteViewModel>> GetAllNotesAsync(int userId)
+        {
+            var notes = await _repo.GetAllAsync(userId);
+            return notes?.Select(u => u.ToViewModel()).Where(vm => vm != null).Cast<NoteViewModel>() ?? Enumerable.Empty<NoteViewModel>();
+        }
         /// <summary>
         /// Deletes a note by their ID. This is an overload.
         /// </summary>
@@ -125,6 +130,11 @@ namespace ListKeeperWebApi.WebApi.Services
             return note?.ToViewModel();
         }
 
+        public async Task<NoteViewModel?> GetNoteByIdAsync(int id, int userId)
+        {
+            var note = await _repo.GetByIdAsync(id, userId);
+            return note?.ToViewModel();
+        }
         /// <summary>
         /// Retrieves notes based on search criteria including text search, completion status, and due date filters.
         /// </summary>
@@ -145,7 +155,17 @@ namespace ListKeeperWebApi.WebApi.Services
             var notes = await _repo.GetBySearchCriteriaAsync(domainSearchCriteria);
             return notes?.Select(n => n.ToViewModel()).Where(vm => vm != null).Cast<NoteViewModel>() ?? Enumerable.Empty<NoteViewModel>();
         }
+        public async Task<IEnumerable<NoteViewModel>>GetAllNotesBySearchCriteriaAsync(SearchCriteriaViewModel searchCriteria, int userId)
+        {
+            if ((searchCriteria.Statuses.Contains(0) || searchCriteria.Statuses.Length == 0) && string.IsNullOrWhiteSpace(searchCriteria.SearchText) && !searchCriteria.ShowOnlyCompleted.HasValue)
+            {
+                return await GetAllNotesAsync(userId);
+            }
 
+            var domainSearchCriteria = searchCriteria.ToDomain();
+            var notes = await _repo.GetBySearchCriteriaAsync(domainSearchCriteria, userId);
+            return notes?.Select(n => n.ToViewModel()).Where(vm => vm != null).Cast<NoteViewModel>() ?? Enumerable.Empty<NoteViewModel>();
+        }
     }
 }
 

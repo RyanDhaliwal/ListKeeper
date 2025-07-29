@@ -12,6 +12,8 @@ namespace ListKeeper.ApiService.Models.ViewModels
         public bool IsCompleted { get; set; }
         public string Color { get; set; }
 
+        public int UserId { get; set; }
+
         public NoteViewModel()
         {
             Title = string.Empty;

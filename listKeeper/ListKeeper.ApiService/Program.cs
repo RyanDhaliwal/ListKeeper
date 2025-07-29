@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;         // The library for Entity Framework
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;        // Classes for creating and validating security tokens (JWTs)
 using System.Text;                           // Provides tools for encoding text (like our JWT key)
-
+using ListKeeper.ApiService.Helpers;
 // In .NET, everything starts by creating a "builder".
 // This object helps us configure and build our web application step-by-step.
 //
@@ -71,7 +71,7 @@ builder.Services.AddScoped<INoteService, NoteService>();
 builder.Services.AddScoped<INoteCategoryRepository, NoteCategoryRepository>();
 builder.Services.AddScoped<INoteCategoryService, NoteCategoryService>();
 
-
+builder.Services.AddScoped<CurrentUserHelper>();
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // JWT (JSON Web Token) AUTHENTICATION CONFIGURATION

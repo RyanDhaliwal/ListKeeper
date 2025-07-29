@@ -217,6 +217,7 @@ namespace ListKeeperWebApi.WebApi.Endpoints
             {
                 Subject = new ClaimsIdentity(new[]
                 {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim("id", user.Id.ToString()),
                     new Claim(ClaimTypes.Name, user.Username ?? string.Empty),
                     new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
@@ -227,6 +228,8 @@ namespace ListKeeperWebApi.WebApi.Endpoints
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
+
+
             return tokenHandler.WriteToken(token);
         }
 

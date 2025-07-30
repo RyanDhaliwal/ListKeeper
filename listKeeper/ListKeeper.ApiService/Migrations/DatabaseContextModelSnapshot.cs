@@ -46,40 +46,20 @@ namespace ListKeeper.ApiService.Migrations
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("NoteCategoryId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("NoteCategoryId");
-
-                    b.ToTable("Note");
-                });
-
-            modelBuilder.Entity("ListKeeper.ApiService.Models.NoteCategory", b =>
-                {
-                    b.Property<int>("NoteCategoryId")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NoteCategoryId"));
+                    b.HasKey("Id");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_Note_UserId");
 
-                    b.Property<string>("Name")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("NoteCategoryId");
-
-                    b.ToTable("NoteCategory");
+                    b.ToTable("Note");
                 });
 
             modelBuilder.Entity("ListKeeperWebApi.WebApi.Models.User", b =>
@@ -111,9 +91,23 @@ namespace ListKeeper.ApiService.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<bool>("IsMfaEnabled")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Lastname")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("MfaBackupCodes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("MfaSecretKey")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("MfaSetupDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -145,14 +139,16 @@ namespace ListKeeper.ApiService.Migrations
 
             modelBuilder.Entity("ListKeeper.ApiService.Models.Note", b =>
                 {
-                    b.HasOne("ListKeeper.ApiService.Models.NoteCategory", "NoteCategory")
+                    b.HasOne("ListKeeperWebApi.WebApi.Models.User", "User")
                         .WithMany("Notes")
-                        .HasForeignKey("NoteCategoryId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("NoteCategory");
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ListKeeper.ApiService.Models.NoteCategory", b =>
+            modelBuilder.Entity("ListKeeperWebApi.WebApi.Models.User", b =>
                 {
                     b.Navigation("Notes");
                 });

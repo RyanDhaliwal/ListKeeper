@@ -8,7 +8,7 @@ namespace ListKeeperWebApi.WebApi.Data
         Task<bool> Delete(int id);
         Task<bool> Delete(Note note);
         Task<IEnumerable<Note>> GetAllAsync();
-        Task<IEnumerable<Note>> GetAllAsync(int userId); // New method
+        Task<IEnumerable<Note>> GetAllAsync(int userId);
         Task<IEnumerable<Note>> GetBySearchCriteriaAsync(SearchCriteria searchCriteria);
         Task<IEnumerable<Note>> GetBySearchCriteriaAsync(SearchCriteria searchCriteria, int userId);
         Task<Note?> GetByIdAsync(int id);

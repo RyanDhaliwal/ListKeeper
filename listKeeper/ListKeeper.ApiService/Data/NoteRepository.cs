@@ -1,5 +1,5 @@
-﻿using ListKeeper.ApiService.Models;         // Access to the INoteRepository interface.
-using Microsoft.EntityFrameworkCore;        // The main library for Entity Framework Core, our Object-Relational Mapper (ORM).
+﻿using Microsoft.EntityFrameworkCore;        // The main library for Entity Framework Core, our Object-Relational Mapper (ORM).
+using ListKeeper.ApiService.Models;         // Access to the INoteRepository interface.
 
 namespace ListKeeperWebApi.WebApi.Data
 {
@@ -47,9 +47,13 @@ namespace ListKeeperWebApi.WebApi.Data
                 throw;
             }
         }
+
+        /// <summary>
+        /// Finds a note by their primary key (ID) that belongs to a specific user.
+        /// </summary>
         public async Task<Note?> GetByIdAsync(int id, int userId)
         {
-            _logger.LogInformation("Attempting to find note by ID: {NoteId} for user: { UserId}", id, userId);
+            _logger.LogInformation("Attempting to find note by ID: {NoteId} for user: {UserId}", id, userId);
             try
             {
                 return await _context.Notes
@@ -58,10 +62,12 @@ namespace ListKeeperWebApi.WebApi.Data
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while getting note by ID: {NoteId}  for user: { UserId} ", id, userId);
+                _logger.LogError(ex, "An error occurred while getting note by ID: {NoteId} for user: {UserId}", id, userId);
                 throw;
             }
         }
+
+
 
         /// <summary>
         /// Retrieves a list of all notes from the database.
@@ -80,6 +86,10 @@ namespace ListKeeperWebApi.WebApi.Data
                 throw;
             }
         }
+
+        /// <summary>
+        /// Retrieves a list of all notes from the database for a specific user.
+        /// </summary>
         public async Task<IEnumerable<Note>> GetAllAsync(int userId)
         {
             _logger.LogInformation("Attempting to get all notes for user: {UserId}", userId);
@@ -91,10 +101,11 @@ namespace ListKeeperWebApi.WebApi.Data
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while getting all notes for user: { UserId}", userId);
+                _logger.LogError(ex, "An error occurred while getting all notes for user: {UserId}", userId);
                 throw;
             }
         }
+
         /// <summary>
         /// Adds a new note to the database.
         /// </summary>
@@ -198,8 +209,8 @@ namespace ListKeeperWebApi.WebApi.Data
                 if (!string.IsNullOrWhiteSpace(searchCriteria.SearchText))
                 {
                     var searchText = searchCriteria.SearchText.ToLowerInvariant();
-                    query = query.Where(n =>
-                        n.Title.ToLower().Contains(searchText) ||
+                    query = query.Where(n => 
+                        n.Title.ToLower().Contains(searchText) || 
                         n.Content.ToLower().Contains(searchText));
                 }
 
@@ -216,7 +227,7 @@ namespace ListKeeperWebApi.WebApi.Data
                     var hasPastDue = searchCriteria.Statuses.Contains(2);
                     var hasCompleted = searchCriteria.Statuses.Contains(3);
 
-                    query = query.Where(n =>
+                    query = query.Where(n => 
                         (hasUpcoming && n.DueDate.Date > today && !n.IsCompleted) ||
                         (hasPastDue && n.DueDate.Date < today && !n.IsCompleted) ||
                         (hasCompleted && n.IsCompleted));
@@ -231,38 +242,40 @@ namespace ListKeeperWebApi.WebApi.Data
             }
         }
 
-
+        /// <summary>
+        /// Retrieves notes based on search criteria for a specific user using database-level filtering for optimal performance.
+        /// </summary>
         public async Task<IEnumerable<Note>> GetBySearchCriteriaAsync(SearchCriteria searchCriteria, int userId)
         {
-            _logger.LogInformation("Attempting to get notes by search criteria for user: { UserId} ", userId);
+            _logger.LogInformation("Attempting to get notes by search criteria for user: {UserId}", userId);
             try
             {
-                var query = _context.Notes.Where(n => n.UserId == userId); // Start with user filter
+                var query = _context.Notes.Where(n => n.UserId == userId);
                 var today = DateTime.Today;
 
-                // Add search text filter if provided 
+                // Filter by search text if provided
                 if (!string.IsNullOrWhiteSpace(searchCriteria.SearchText))
                 {
                     var searchText = searchCriteria.SearchText.ToLowerInvariant();
-                    query = query.Where(n =>
-                        n.Title.ToLower().Contains(searchText) ||
+                    query = query.Where(n => 
+                        n.Title.ToLower().Contains(searchText) || 
                         n.Content.ToLower().Contains(searchText));
                 }
 
-                // Add completion status filter if specified 
+                // Filter by completion status if specified
                 if (searchCriteria.ShowOnlyCompleted.HasValue)
                 {
                     query = query.Where(n => n.IsCompleted == searchCriteria.ShowOnlyCompleted.Value);
                 }
 
-                // Add status filters if not "All" 
+                // Filter by statuses if not "All" (0=All, 1=Upcoming, 2=Past Due, 3=Completed)
                 if (searchCriteria.Statuses.Length > 0 && !searchCriteria.Statuses.Contains(0))
                 {
                     var hasUpcoming = searchCriteria.Statuses.Contains(1);
                     var hasPastDue = searchCriteria.Statuses.Contains(2);
                     var hasCompleted = searchCriteria.Statuses.Contains(3);
 
-                    query = query.Where(n =>
+                    query = query.Where(n => 
                         (hasUpcoming && n.DueDate.Date > today && !n.IsCompleted) ||
                         (hasPastDue && n.DueDate.Date < today && !n.IsCompleted) ||
                         (hasCompleted && n.IsCompleted));
@@ -276,5 +289,7 @@ namespace ListKeeperWebApi.WebApi.Data
                 throw;
             }
         }
+
     }
+
 }

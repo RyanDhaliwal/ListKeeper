@@ -2,8 +2,11 @@
 // They give us access to the classes and methods we need from the .NET framework and our own project files.
 //
 using ListKeeper.ApiService.Services.ListKeeperWebApi.WebApi.Services;
+using ListKeeper.ApiService.Services; // For MFA service
+using ListKeeper.ApiService.Helpers;
 using ListKeeperWebApi.WebApi.Data;          // Access to our DatabaseContext, UserRepository
 using ListKeeperWebApi.WebApi.Endpoints;     // Access to our endpoint mapping extension methods
+using ListKeeper.ApiService.EndPoints;       // Access to MFA endpoints
 using ListKeeperWebApi.WebApi.Models;        // Access to our User model
 using ListKeeperWebApi.WebApi.Models.Interfaces; // Access to our IUserRepository interface
 using ListKeeperWebApi.WebApi.Services;      // Access to our UserService
@@ -12,7 +15,7 @@ using Microsoft.EntityFrameworkCore;         // The library for Entity Framework
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;        // Classes for creating and validating security tokens (JWTs)
 using System.Text;                           // Provides tools for encoding text (like our JWT key)
-using ListKeeper.ApiService.Helpers;
+
 // In .NET, everything starts by creating a "builder".
 // This object helps us configure and build our web application step-by-step.
 //
@@ -68,10 +71,13 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<INoteRepository, NoteRepository>();
 builder.Services.AddScoped<INoteService, NoteService>();
 
-builder.Services.AddScoped<INoteCategoryRepository, NoteCategoryRepository>();
-builder.Services.AddScoped<INoteCategoryService, NoteCategoryService>();
+// Register MFA service for Multi-Factor Authentication
+builder.Services.AddScoped<IMfaService, MfaService>();
 
-builder.Services.AddScoped<CurrentUserHelper>();
+// Register the helper for accessing current user information
+builder.Services.AddScoped<ICurrentUserHelper, CurrentUserHelper>();
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // JWT (JSON Web Token) AUTHENTICATION CONFIGURATION
@@ -239,7 +245,9 @@ app.UseAuthorization();
 //
 app.MapGroup($"{routePrefix}/users").MapUserApiEndpoints();
 app.MapGroup($"{routePrefix}/notes").MapNoteApiEndpoints();
-app.MapGroup($"{routePrefix}/notecategories").MapNoteCategoryApiEndpoints();
+
+// Map MFA endpoints
+app.MapMfaEndpoints();
 
 // This is the final command that starts the web server and makes it listen for incoming requests.
 // The application will run until you stop it.
